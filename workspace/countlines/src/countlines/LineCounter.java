@@ -4,7 +4,7 @@ import java.io.*;
 public class LineCounter {
     
 
-    private static String[] javaOrCExtensions = new String[] { 
+    private static final String[] javaOrCExtensions = new String[] {
             // list all file types which follow the '//' and '/*'
             // comment convention.
             ".java", ".h", ".cpp", ".cs", ".hpp", ".c", ".m", ".php"
