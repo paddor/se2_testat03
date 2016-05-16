@@ -6,30 +6,31 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class JavaLinesTest {
+	LineCounts lineCounts;
 
 	@Before
 	public void setUp() {
-		LineCounter.countLines("fixtures/test1.java");
+		lineCounts = LineCounter.countLines("fixtures/test1.java");
 	}
 
 
 	@Test
 	public void testTotalLineCount() {
-		assertEquals(275, LineCounter.getTotalLineCount());
+		assertEquals(275, lineCounts.getTotalLineCount());
 	}
 
 	@Test
 	public void testNetLineCount() {
-		assertEquals(238, LineCounter.getNetLineCount());
+		assertEquals(238, lineCounts.getNetLineCount());
 	}
 
 	@Test
 	public void testCommentLineCount() {
-		assertEquals(10, LineCounter.getCommentLineCount());
+		assertEquals(10, lineCounts.getCommentLineCount());
 	}
 
 	@Test
 	public void testEmptyLineCount() {
-		assertEquals(27, LineCounter.getEmptyLineCount());
+		assertEquals(27, lineCounts.getEmptyLineCount());
 	}
 }

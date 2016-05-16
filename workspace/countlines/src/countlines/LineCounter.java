@@ -4,8 +4,6 @@ import java.io.*;
 public class LineCounter {
     
 
-    private static LineCounts lineCounts = new LineCounts(0, 0, 0);
-    private static BufferedReader theReader;
     private static String[] javaOrCExtensions = new String[] { 
             // list all file types which follow the '//' and '/*'
             // comment convention.
@@ -13,31 +11,35 @@ public class LineCounter {
         };
 
     public static LineCounts countLines( String fileName ) {
+        BufferedReader theReader = null;
         try {
             theReader = new BufferedReader( new FileReader( fileName ));
-        }
-        catch (FileNotFoundException fnfe) {
+            return count(fileName, theReader);
+        } catch (FileNotFoundException fnfe) {
             System.out.println( "File " + fileName + " not found." );
+            // NOTE: I'd prefer killing the process here. But whatever.
+            return new LineCounts(0, 0, 0);
+        } finally {
+            try {
+                theReader.close();
+            }
+            catch (IOException ioe) {
+                System.out.println("Cannot close " + fileName + " : "
+                        + ioe.toString());
+            }
         }
+    }
 
+    private static LineCounts count(String fileName, BufferedReader theReader) {
         if (isAJavaOrCFile( fileName )) {
-            lineCounts = new JavaCounter(theReader).count();
+            return new JavaCounter(theReader).count();
         }
         else if (fileName.toLowerCase().endsWith( ".sql" )) {
-            lineCounts = new SqlCounter(theReader).count();
+            return new SqlCounter(theReader).count();
         }
         else {
-            lineCounts = new SimpleCounter(theReader).count();
+            return new SimpleCounter(theReader).count();
         }
-
-        try {
-            theReader.close();
-        }
-        catch (IOException ioe) {
-            System.out.println("Cannot close " + fileName + " : "
-                    + ioe.toString());
-        }
-        return lineCounts;
     }
 
     private static boolean isAJavaOrCFile( String fileName ) {
@@ -47,21 +49,5 @@ public class LineCounter {
             }
         }
         return  false;
-    }
-    
-    public static int getNetLineCount() {
-        return lineCounts.getNetLineCount();
-    }
-    
-    public static int getTotalLineCount() {
-        return lineCounts.getTotalLineCount();
-    }
-
-    public static int getEmptyLineCount() {
-        return lineCounts.getEmptyLineCount();
-    }
-    
-    public static int getCommentLineCount() {
-        return lineCounts.getCommentLineCount();
     }
 }
