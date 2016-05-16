@@ -10,9 +10,8 @@ public class LineCounter {
 
     private static int nextCharIndex = 0;
     private static String currentLine = null;
-    private static int lineCount = 0;
-    private static int emptyLineCount = 0;
-    private static int commentLineCount = 0;
+    private static int lineCount = 0; // backwards compatibility (is set by readNextLine())
+    private static LineCounts lineCounts = new LineCounts(0, 0, 0);
     private static BufferedReader theReader;
     private static boolean countBracketAsEmpty = true;
     private static boolean atEOF = false;
@@ -21,8 +20,7 @@ public class LineCounter {
             // comment convention.
             ".java", ".h", ".cpp", ".cs", ".hpp", ".c", ".m", ".php"
         };
-    
-    
+
     public static void countLines( String fileName ) {
         try {
             theReader = new BufferedReader( new FileReader( fileName ));
@@ -30,15 +28,15 @@ public class LineCounter {
         catch (FileNotFoundException fnfe) {
             System.out.println( "File " + fileName + " not found." );
         }
-        
+
         if (isAJavaOrCFile( fileName )) {
-            doJavaLineCount();
+            lineCounts = doJavaLineCount();
         }
         else if (fileName.toLowerCase().endsWith( ".sql" )) {
-            doSQLLineCount();
+            lineCounts = doSQLLineCount();
         }
         else {
-            doSimpleLineCount();
+            lineCounts = doSimpleLineCount();
         }
 
         try {
@@ -85,18 +83,21 @@ public class LineCounter {
         return c;
     }
 
-    private static void doJavaLineCount() {
+    private static LineCounts doJavaLineCount() {
         char ch = ' ';
         char lastCh = ' ';
         boolean commentLine = false;
         boolean inSlashStarComment = false;
         boolean stillEmptyLine = true;
-        
+
+        int emptyLineCount = 0;
+        int commentLineCount = 0;
+
         initCountingVariables();
         readNextLine();
         ch = getChar();
         while (ch != EOF) {
-            
+
             if (ch == EOL) {
                 if (stillEmptyLine) {
                     emptyLineCount++;
@@ -139,15 +140,19 @@ public class LineCounter {
             lastCh = ch;
             ch = getChar();
         }
+	return new LineCounts(lineCount, emptyLineCount, commentLineCount);
     }
 
-    private static void doSQLLineCount() {
+    private static LineCounts doSQLLineCount() {
         char ch = ' ';
         char lastCh = ' ';
         boolean commentLine = false;
         boolean inSlashStarComment = false;
         boolean stillEmptyLine = true;
-        
+
+        int emptyLineCount = 0;
+        int commentLineCount = 0;
+
         initCountingVariables();
         readNextLine();
         ch = getChar();
@@ -197,12 +202,16 @@ public class LineCounter {
             lastCh = ch;
             ch = getChar();
         }
+	return new LineCounts(lineCount, emptyLineCount, commentLineCount);
     }
     
-    private static void doSimpleLineCount() {
+    private static LineCounts doSimpleLineCount() {
         char ch = ' ';
         boolean stillEmptyLine = true;
-        
+
+        int emptyLineCount = 0;
+        int commentLineCount = 0;
+
         initCountingVariables();
         readNextLine();
         ch = getChar();
@@ -221,6 +230,7 @@ public class LineCounter {
             }
             ch = getChar();
         }
+	return new LineCounts(lineCount, emptyLineCount, commentLineCount);
     }
     
     private static boolean checkIfLineIsStillEmpty( char ch ) {
@@ -251,25 +261,24 @@ public class LineCounter {
     }
     
     private static void initCountingVariables() {
-        lineCount = 0;
-        emptyLineCount = 0;
-        commentLineCount = 0;
-        atEOF = false;
+        lineCount = 0; // backwards compatibility
+    	lineCounts = new LineCounts(0, 0, 0); // backwards compatibility
+        atEOF = false; // ugly because method name describes something else
     }
     
     public static int getNetLineCount() {
-        return lineCount - emptyLineCount - commentLineCount;
+        return lineCounts.getNetLineCount();
     }
     
     public static int getTotalLineCount() {
-        return lineCount;
+        return lineCounts.getTotalLineCount();
     }
 
     public static int getEmptyLineCount() {
-        return emptyLineCount;
+        return lineCounts.getEmptyLineCount();
     }
     
     public static int getCommentLineCount() {
-        return commentLineCount;
+        return lineCounts.getCommentLineCount();
     }
 }
