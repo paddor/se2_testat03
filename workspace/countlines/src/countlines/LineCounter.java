@@ -12,7 +12,7 @@ public class LineCounter {
             ".java", ".h", ".cpp", ".cs", ".hpp", ".c", ".m", ".php"
         };
 
-    public static void countLines( String fileName ) {
+    public static LineCounts countLines( String fileName ) {
         try {
             theReader = new BufferedReader( new FileReader( fileName ));
         }
@@ -37,6 +37,7 @@ public class LineCounter {
             System.out.println("Cannot close " + fileName + " : "
                     + ioe.toString());
         }
+        return lineCounts;
     }
 
     private static boolean isAJavaOrCFile( String fileName ) {

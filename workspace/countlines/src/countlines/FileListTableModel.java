@@ -64,11 +64,11 @@ public class FileListTableModel extends AbstractTableModel {
     
     
     private void countFile( int rowIndex ) {
-        LineCounter.countLines( (String)getValueAt( rowIndex, FILENAME_COLUMN ));
-        vecNetLineCount.add(     new Integer(LineCounter.getNetLineCount()));
-        vecCommentLineCount.add( new Integer(LineCounter.getCommentLineCount()));
-        vecEmptyLineCount.add(   new Integer(LineCounter.getEmptyLineCount()));
-        vecTotalLineCount.add(   new Integer(LineCounter.getTotalLineCount()));
+        LineCounts lc = LineCounter.countLines( (String)getValueAt( rowIndex, FILENAME_COLUMN ));
+        vecNetLineCount.add(     new Integer(lc.getNetLineCount()));
+        vecCommentLineCount.add( new Integer(lc.getCommentLineCount()));
+        vecEmptyLineCount.add(   new Integer(lc.getEmptyLineCount()));
+        vecTotalLineCount.add(   new Integer(lc.getTotalLineCount()));
         fireTableDataChanged();
     }
     
