@@ -12,7 +12,7 @@ abstract class Counter {
 
     private String currentLine = null;
     private BufferedReader reader;
-    private boolean atEOF = false; // ugly because method name describes something else
+    private boolean atEOF = false;
 
     private boolean countBracketAsEmpty = true;
 
