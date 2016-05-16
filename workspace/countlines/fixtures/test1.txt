@@ -1,0 +1,3 @@
+This is a line. The next one is empty.
+
+Net=2, Empty=1, Total=3, Comment=0
