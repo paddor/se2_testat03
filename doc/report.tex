@@ -1,0 +1,178 @@
+\documentclass[a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper]{geometry}
+\geometry{verbose, marginparwidth=15mm, marginparsep=3mm, tmargin=25mm}
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
+\usepackage[hyphens]{url}
+\usepackage[flushmargin,hang]{footmisc}
+\usepackage{hyperref}
+\usepackage[parfill]{parskip} % no idented first line of each paragraph
+\usepackage{amssymb} % for \checkmark
+\usepackage{enumitem} % for \begin{itemize}[label={...}]
+\usepackage{tikz}
+\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,fit,positioning,shapes.symbols,chains,shapes.geometric,shapes.arrows,calc}
+\hypersetup{
+	unicode=true,
+	pdftitle={SE2: Testat 3},
+	pdfsubject={Refactoring von countlines},
+	pdfauthor={Patrik Wenger},
+	pdfkeywords={Java} {SE2} {refactoring} {JUnit},
+}
+
+\usepackage{pdfpages}
+\title{SE2: Testat 3}
+\author{Patrik Wenger}
+
+\usepackage{color}
+\usepackage{listings}
+\lstdefinestyle{customjava}{ % custom style for C++ listings
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=single,
+  xleftmargin=\parindent,
+  language=java,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
+\newcommand{\java}[1]{\lstinline[style=customjava]{#1}} % inline Java
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Ausgangslage}
+Die Software \emph{countlines} ist das ausgew\"ahlte Beispielprojekt um
+verschiedene Codesmells mit Hilfe der unten benutzten Tools zu finden. Es kann
+verschiedene Arten von Codezeilen wie eigentlicher Code (netto),
+Kommentarzeilen, leere Zeilen, sowie auch die totale Anzahl der Zeilen in
+Quellcodedateien berechnen.  Dabei wird unter anderem Quellcode der Sprachen C,
+C++, Java, Pascal, SQL und PHP unterst\"utzt.\\
+
+\section{Identifizierte Code Smells}
+Ich werde mich hier auf die Klasse \emph{LineCounter} konzentrieren, da hier
+die Kernfunktionalit\"at enthalten ist und ich das GUI v\"ollig irrelevant
+finde (AWT ist ja selbst schon getestet).
+
+\begin{enumerate}
+	\item \emph{Long Method}
+
+		Dieser Smell ist ziemlich offensichtlich, jedoch nicht
+		unbedingt sinvoll aufzul\"osen, da die jeweiligen Methoden den
+		Parsingalgorhitmus enthalten, der sich auf einige lokale
+		Variablen st\"utzt, aber sonst eigentlich selfcontained ist. Da
+		sehe ich keinen grossen Nutzen, diese Methoden zu verk\"urzen.
+		Es enst\"unde durch die Notwendigkeit f\"ur neue Felder sowieso
+		nur ein neuer Smell: \emph{Temporary Fields}.
+
+	\item \emph{Large Class}
+
+		\emph{LineCounter} ist mit mehr als 250 Zeilen ziemlich gross
+		und beinhaltet, wie die weiteren Smells zeigen, definitiv zu
+		viel Verantwortung.
+
+	\item \emph{Data Clumps}
+
+		Die vier Anzahlen von verschiedenartigen Linien (Total, Netto,
+		leere und Kommentarzeilen) werden immer miteinander gez\"ahlt
+		und im Fenster auch miteinander angezeigt. Es macht also Sinn,
+		diese mit \emph{Extract Component} in eine eigene, simple
+		Datenklasse zu verpacken. Dies erlaubt dann auch einige
+		Vereinfachungen in \emph{FileListTableModel}.
+
+	\item \emph{Temporary Field}
+
+		Die \java{static} Felder in der Klasse \emph{LineCounter}
+		enthalten bedeutungslose Zahlen bevor die Methode
+		\emph{countLines} zum ersten Mal auferufen wird. Dies ist
+		verwirrend und ein weiterer Hinweis dazu, dass
+		\emph{LineCounter} unter dem Smell \emph{Large Class} leidet.
+
+	\item \emph{Divergent Change}
+
+		Sofern ein neuer Dateityp unterst\"utzt werden soll, muss dies
+		jeweils in mehreren Methoden der Klasse \emph{LineCounter}
+		erfolgen. Hier macht also \emph{Replace Type Code with
+		Subclasses} Sinn.
+
+	\item \emph{Feature Envy}
+
+		In \emph{Main} wird die Liste von Default-Dateiendungen
+		angegeben. Wegen der Tatsache, dass sich der Code in
+		\emph{LineCounter} auch auf die Endungen der Dateinamen
+		verl\"asst um die Programmiersprache zu bestimmen, k\"onnte man
+		argumentieren, dass eine sinnvolle Liste von standardm\"assig
+		unterst\"utzten Dateiendungen direkt in die Klasse
+		\emph{LineCounter} geh\"ort.
+
+		Da dies jedoch schon der sechste Code Smell ist und die
+		Meinungen \"uber diese Liste von Default-Dateiendungen
+		auseinander gehen k\"onnten, belasse ich diesen Smell so.
+\end{enumerate}
+
+Hinzu kommt noch, dass die Klasse \emph{LineCounter} nicht thread-safe ist.
+Dies ist so, weil die Resultate in \java{static} Felder gespeichert werden. Es
+w\"are sch\"on, wenn sie von mehreren Threads verwendet werden k\"onnte.
+
+Des weiteren beinhaltet zum Beispiel die Methode \java{initCountingVariables}
+auch die Reinitialisierung der Variable \java{atEOF}, was v\"ollig fehl am
+Platz ist.
+
+\section{Erste zwei Unit Tests}
+Die ersten Unit Tests f\"r die Klasse \emph{LineCounter} wurden eingebaut, ohne jeglichen bestehenden Code zu ver\"andern.
+
+Siehe commit 9d89bb\footnote{\url{https://github.com/paddor/se2_testat03/commit/9d89bbfda73249aec310644e5085c9a595be1bf7}}
+
+\section{Weitere Refactorings}
+
+\subsection{\emph{Data Clump} beseitigen}
+Mit dem Commit
+537b73\footnote{\url{https://github.com/paddor/se2_testat03/commit/537b735a12270c6d9c2dde20abc13e511970f149}}
+wurde der Smell \emph{Data Clumps} beseitigt, indem die zusammengeh\"origen
+Zeilenanzahlen (Total, Netto, leere und Kommentarzeilen) in die neue Klasse
+\java{LineCounts} gepackt werden. Die Felder sind \java{final}. F\"ur den
+Zugriff werden die drei Methoden \java{getLineCount()},
+\java{getTotalLineCount()}, \java{getEmptyLineCount()} und
+\java{getCommentLineCount()} verwendet, statt direkten Zugriff auf die Felder
+zuzulassen, was wieder ein Code Smell w\"are.
+
+\subsection{\emph{Large Class} beseitigen}
+Mit dem Commit
+b417a4\footnote{\url{https://github.com/paddor/se2_testat03/commit/b417a4fd6d611a4bccc4564daf9d479acc84ca34}}
+wurde dann schliesslich \emph{Replace Type Code with Subclasses} angewendet und
+die neuen Klassen \java{Counter}, \java{JavaCounter}, \java{SqlCounter} und
+\java{SimpleCounter} enstanden. Neben der Verk\"urzung vereinfachte sich Code
+auch dadurch, dass die ausgelagerte Funktionalit\"at nun in Instanzmethoden
+liegt, und nicht mehr in \java{static} Methoden. Dies bedeutet, dass das
+manuelle Reinitializieren der Z\"ahlvariablen (und auch von \java{atEOF})
+eleganterweise entf\"allt.
+
+\subsection{Thread Safety}
+Mit dem Commit
+1f8266\footnote{\url{https://github.com/paddor/se2_testat03/commit/1f8266626a6b1a4da49e448b331657f887347c80}} wurde dann schliesslich die Methode \java{LineCounter.countLines()} so ge\"andert, dass sie das \java{LineCounts}-Objekt zur\"uckgibt und der Clientcode in \java{FileListTableModel} dementsprechend angepasst.
+
+Mit den Commits
+18fc92\footnote{\url{https://github.com/paddor/se2_testat03/commit/18fc92c421dd3dcf92b51d84ba63afa8c62adec5}}
+und
+ccad56\footnote{\url{https://github.com/paddor/se2_testat03/commit/ccad561721a5674c7841ae5ccd8de04c7cae942f}}
+wurde dann entg\"ultig auf ver\"anderbare, geteilte Daten in \java{static} Variablen
+verzichtet um das ganze thread-safe zu machen.
+
+
+\section{Performance-Garantie}
+Viel mehr als im urspr\"unglichen Code passiert nicht. Es gibt ein wenig mehr
+Zwischenobjekte, jedoch ist der Code jetzt thread-safe, was heisst, dass ein
+Prozess, der diesen Code ausf\"uhrt, nun mehrere Prozessoren gleichzeitig
+belegen kann, ohne dass es Raceconditions gibt. Somit skaliert der neue Code
+nun besser, was bei heutigen Multicore-Architekturen wichtiger ist als
+sequenzielle Performance (welche wahrscheinlich unter den neuen
+Zwischenobjekten unwesentlich leidet).
+
+Aber ehrlich gesagt kann man keine grossen Aussagen \"uber die Performance
+machen, ohne zu profilen.
+
+\end{document}
