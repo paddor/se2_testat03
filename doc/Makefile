@@ -1,6 +1,6 @@
 SOURCES = report.tex
 
-ba.pdf:	$(SOURCES)
+report.pdf: $(SOURCES)
 	pdflatex $^
 	pdflatex $^
 
